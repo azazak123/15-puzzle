@@ -1,7 +1,7 @@
-use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{read, Event, KeyCode, KeyEvent};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use rand::{thread_rng, Rng};
-use std::io::{stdin, stdout};
+use std::io::stdin;
 use std::process::Command;
 
 fn main() {
@@ -9,7 +9,6 @@ fn main() {
     let mut arr = vec![vec![0; n]; n];
     arr = random_generate(arr, n);
     enable_raw_mode().unwrap();
-    let no_modifiers = KeyModifiers::empty();
     loop {
         print(&arr);
         match read().unwrap() {
@@ -33,10 +32,9 @@ fn main() {
             }) => arr = move_zero(arr, KeyCode::Down),
             _ => (),
         }
-        //stdin().read_line(&mut String::new());
     }
     disable_raw_mode().unwrap();
-    stdin().read_line(&mut String::new());
+    stdin().read_line(&mut String::new()).unwrap();
 }
 
 fn random_generate(mut arr: Vec<Vec<usize>>, n: usize) -> Vec<Vec<usize>> {
@@ -101,16 +99,16 @@ fn print(arr: &Vec<Vec<usize>>) {
 
 fn move_zero(mut arr: Vec<Vec<usize>>, key: KeyCode) -> Vec<Vec<usize>> {
     let n = arr.len();
-    let (i, (j, _y)): (usize, (usize, &usize)) = arr
+    let (i, j): (usize, usize) = arr
         .iter()
         .enumerate()
-        .map(|(i, x)| {
-            let s = x.iter().enumerate().find(|(j, y)| **y == 0usize);
-            (i, s)
-            //.map(|(j, y)| if *y == 0usize { (i, j) } else { (n, n) })
+        .filter_map(|(i, x)| {
+            let s = x.iter().enumerate().find(|(_j, y)| **y == 0usize);
+            match s {
+                None => None,
+                Some((j, _y)) => Some((i, j)),
+            }
         })
-        .filter(|(i, s)| s.is_some())
-        .map(|(i, s)| (i, s.unwrap()))
         .next()
         .unwrap();
     match key {
