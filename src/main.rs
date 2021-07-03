@@ -1,20 +1,35 @@
 use crossterm::event::{read, Event, KeyCode, KeyEvent};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crossterm::terminal::enable_raw_mode;
 use rand::{thread_rng, Rng};
 use std::io::stdin;
 use std::process::Command;
 
 fn main() {
-    let n: usize = 4;
+    let mut n = String::new();
+    println!("Введите сторону квадрата:");
+    stdin().read_line(&mut n).unwrap();
+    let n = n.trim().parse::<usize>();
+    let n: usize = if n.is_ok() {
+        n.unwrap()
+    } else {
+        println!("Вы ввели не целое число");
+        stdin().read_line(&mut String::new()).unwrap();
+        return;
+    };
     let mut arr = vec![vec![0; n]; n];
     arr = random_generate(arr, n);
     enable_raw_mode().unwrap();
     loop {
         print(&arr);
+        if check(&arr) {
+            println!("Вы победили !");
+            stdin().read_line(&mut String::new()).unwrap();
+            return;
+        }
         match read().unwrap() {
-            Event::Key(KeyEvent {
-                code: KeyCode::Esc, ..
-            }) => break,
+            // Event::Key(KeyEvent {
+            //     code: KeyCode::Esc, ..
+            // }) => return,
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 ..
@@ -33,8 +48,6 @@ fn main() {
             _ => (),
         }
     }
-    disable_raw_mode().unwrap();
-    stdin().read_line(&mut String::new()).unwrap();
 }
 
 fn random_generate(mut arr: Vec<Vec<usize>>, n: usize) -> Vec<Vec<usize>> {
@@ -154,4 +167,15 @@ fn move_zero(mut arr: Vec<Vec<usize>>, key: KeyCode) -> Vec<Vec<usize>> {
         }
         _ => arr,
     }
+}
+
+fn check(arr: &Vec<Vec<usize>>) -> bool {
+    let n = arr.len();
+    let (_num, arr): (Vec<usize>, Vec<usize>) = arr
+        .iter()
+        .flatten()
+        .enumerate()
+        .filter(|(i, x)| *i + 1 == **x)
+        .unzip();
+    n * n == arr.len() + 1
 }
